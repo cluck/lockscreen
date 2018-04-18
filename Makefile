@@ -12,3 +12,7 @@ install:
 	mkdir -p ~/bin
 	install -m 0750 lockscreen ~/bin/lockscreen
 	cp -a Lock\ Screen\ and\ Sleep.workflow ~/Library/Services/Lock\ Screen\ and\ Sleep.workflow
+
+package: lockscreen
+	test ! -r lockscreen.zip || rm lockscreen.zip
+	zip -9 lockscreen.zip lockscreen
