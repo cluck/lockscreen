@@ -20,6 +20,7 @@
 
 
 extern void SACLockScreenImmediate ();
+#define BLINK 127000
 
 int main (
     int argc,
@@ -30,13 +31,18 @@ int main (
   CFDictionaryRef sessionInfoDict;
   CFBooleanRef sessionIsLocked;
   bool result = false;
+  int retry_scrlock;
 
   displayWrangler = IOServiceGetMatchingService (kIOMasterPortDefault,
                                                  IOServiceNameMatching ("IODisplayWrangler"));
 
   SACLockScreenImmediate ();
 
-  while (!result)
+  for (
+    retry_scrlock = 0;
+    retry_scrlock < 20 && !result;
+    retry_scrlock++
+       )
   {
     sessionInfoDict = CGSessionCopyCurrentDictionary();
     sessionIsLocked = CFDictionaryGetValue (sessionInfoDict,
@@ -46,11 +52,15 @@ int main (
     }
     CFRelease (sessionInfoDict);
     if (!result)
-      usleep(100000);
+      usleep(BLINK);
   }
 
-  IORegistryEntrySetCFProperty (displayWrangler, CFSTR("IORequestIdle"), kCFBooleanTrue);
+  if (result) {
+    usleep(2 * BLINK);
+    IORegistryEntrySetCFProperty (displayWrangler, CFSTR("IORequestIdle"), kCFBooleanTrue);
+  }
+
   IOObjectRelease (displayWrangler);
 
-  return 0;
+  return !result ? 0 : 1;
 }
